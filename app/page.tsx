@@ -91,6 +91,23 @@ export default function Home() {
     );
   }
 
+  async function removeVideo(resource: Resource) {
+    if (!confirm("Remove this video?")) return;
+
+    setError("");
+    setNotice("");
+
+    const response = await fetch(`/api/resources/${resource.id}`, { method: "DELETE" });
+    const data = await response.json();
+    if (!response.ok) {
+      setError(data.error ?? "Could not remove video.");
+      return;
+    }
+
+    setResources((current) => current.filter((item) => item.id !== resource.id));
+    setNotice("Removed video.");
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
       <header className="mb-5 border-b border-stone-200 pb-4">
@@ -175,7 +192,7 @@ export default function Home() {
                   <p className="mt-1 text-sm text-stone-600">{resource.channel_title ?? "YouTube"}</p>
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="flex flex-wrap items-center gap-2 pt-1">
                   <button
                     onClick={() => upvote(resource)}
                     disabled={votedSet.has(resource.id)}
@@ -183,6 +200,14 @@ export default function Home() {
                   >
                     {votedSet.has(resource.id) ? "Voted" : "Upvote"} · {resource.upvote_count}
                   </button>
+                  {resource.type === "video" ? (
+                    <button
+                      onClick={() => removeVideo(resource)}
+                      className="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                    >
+                      Remove video
+                    </button>
+                  ) : null}
                   <a
                     href={resource.canonical_url}
                     target="_blank"
