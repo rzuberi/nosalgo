@@ -190,7 +190,7 @@ export default function Home() {
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visibleResources.map((resource) => (
             <article key={resource.id} className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
-              <a href={resource.canonical_url} target="_blank" rel="noreferrer" className="block bg-stone-200">
+              <a href={resource.canonical_url} className="block bg-stone-200">
                 {resource.thumbnail_url ? (
                   <img src={resource.thumbnail_url} alt="" className="aspect-video w-full object-cover" loading="lazy" />
                 ) : (
@@ -214,8 +214,6 @@ export default function Home() {
                   </button>
                   <a
                     href={resource.canonical_url}
-                    target="_blank"
-                    rel="noreferrer"
                     className="rounded-md bg-stone-900 px-3 py-2 text-sm font-semibold text-white hover:bg-stone-700"
                   >
                     Open on YouTube
