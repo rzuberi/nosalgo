@@ -18,6 +18,8 @@ export default function Home() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [voted, setVoted] = useState<string[]>([]);
+  const [pendingRemove, setPendingRemove] = useState<Resource | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   useEffect(() => {
     setVoted(JSON.parse(localStorage.getItem("learnTubeVotes") ?? "[]"));
@@ -91,21 +93,23 @@ export default function Home() {
     );
   }
 
-  async function removeVideo(resource: Resource) {
-    if (!confirm("Remove this video?")) return;
-
+  async function removeResource() {
+    if (!pendingRemove) return;
     setError("");
     setNotice("");
+    setRemoving(true);
 
-    const response = await fetch(`/api/resources/${resource.id}`, { method: "DELETE" });
+    const response = await fetch(`/api/resources/${pendingRemove.id}`, { method: "DELETE" });
     const data = await response.json();
+    setRemoving(false);
     if (!response.ok) {
-      setError(data.error ?? "Could not remove video.");
+      setError(data.error ?? "Could not remove resource.");
       return;
     }
 
-    setResources((current) => current.filter((item) => item.id !== resource.id));
-    setNotice("Removed video.");
+    setResources((current) => current.filter((item) => item.id !== pendingRemove.id));
+    setPendingRemove(null);
+    setNotice(`Removed ${pendingRemove.type}.`);
   }
 
   return (
@@ -200,14 +204,6 @@ export default function Home() {
                   >
                     {votedSet.has(resource.id) ? "Voted" : "Upvote"} · {resource.upvote_count}
                   </button>
-                  {resource.type === "video" ? (
-                    <button
-                      onClick={() => removeVideo(resource)}
-                      className="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
-                    >
-                      Remove video
-                    </button>
-                  ) : null}
                   <a
                     href={resource.canonical_url}
                     target="_blank"
@@ -216,12 +212,42 @@ export default function Home() {
                   >
                     Open on YouTube
                   </a>
+                  <button
+                    onClick={() => setPendingRemove(resource)}
+                    className="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+                  >
+                    Remove {resource.type}
+                  </button>
                 </div>
               </div>
             </article>
           ))}
         </section>
       )}
+
+      {pendingRemove ? (
+        <div className="fixed inset-0 z-10 grid place-items-center bg-black/30 px-4">
+          <div role="dialog" aria-modal="true" className="w-full max-w-xs rounded-lg bg-white p-4 shadow-lg">
+            <p className="text-base font-semibold text-stone-950">Remove this {pendingRemove.type}?</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setPendingRemove(null)}
+                disabled={removing}
+                className="rounded-md border border-stone-300 px-3 py-2 text-sm font-semibold text-stone-800 hover:bg-stone-100 disabled:opacity-60"
+              >
+                No
+              </button>
+              <button
+                onClick={removeResource}
+                disabled={removing}
+                className="rounded-md bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

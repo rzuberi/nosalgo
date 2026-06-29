@@ -8,17 +8,16 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
       .from("resources")
       .delete()
       .eq("id", id)
-      .eq("type", "video")
-      .select("id")
+      .select("id, type")
       .maybeSingle();
 
     if (error) throw error;
-    if (!data) return NextResponse.json({ error: "Video not found." }, { status: 404 });
+    if (!data) return NextResponse.json({ error: "Resource not found." }, { status: 404 });
 
-    return NextResponse.json({ id: data.id });
+    return NextResponse.json({ id: data.id, type: data.type });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Could not remove video." },
+      { error: error instanceof Error ? error.message : "Could not remove resource." },
       { status: 400 },
     );
   }
