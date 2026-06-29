@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") as ResourceType | null;
-    const sort = (searchParams.get("sort") as SortMode | null) ?? "top";
+    const sort = (searchParams.get("sort") as SortMode | null) ?? "newest";
 
     if (type && !resourceTypes.includes(type)) {
       return NextResponse.json({ error: "Unknown resource type." }, { status: 400 });

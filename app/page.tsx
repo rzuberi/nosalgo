@@ -11,7 +11,7 @@ const tabs: { type: ResourceType; label: string }[] = [
 
 export default function Home() {
   const [tab, setTab] = useState<ResourceType>("video");
-  const [sort, setSort] = useState<SortMode>("top");
+  const [sort, setSort] = useState<SortMode>("newest");
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -28,7 +28,7 @@ export default function Home() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetch(`/api/resources?type=${tab}&sort=${sort}`)
+    fetch("/api/resources?sort=newest")
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? "Could not load resources.");
@@ -40,9 +40,17 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [tab, sort]);
+  }, []);
 
   const votedSet = useMemo(() => new Set(voted), [voted]);
+  const visibleResources = useMemo(() => {
+    return resources
+      .filter((resource) => resource.type === tab)
+      .sort((a, b) => {
+        const newest = Date.parse(b.created_at) - Date.parse(a.created_at);
+        return sort === "top" ? b.upvote_count - a.upvote_count || newest : newest;
+      });
+  }, [resources, sort, tab]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,7 +72,7 @@ export default function Home() {
       form.reset();
       setTab(data.resource.type);
       setNotice("Added.");
-      setResources((current) => (data.resource.type === tab ? [data.resource, ...current] : current));
+      setResources((current) => [data.resource, ...current]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add that link.");
     } finally {
@@ -174,13 +182,13 @@ export default function Home() {
 
       {loading ? (
         <p className="py-12 text-center text-stone-600">Loading...</p>
-      ) : resources.length === 0 ? (
+      ) : visibleResources.length === 0 ? (
         <p className="rounded-lg border border-dashed border-stone-300 bg-white py-12 text-center text-stone-600">
           No resources yet.
         </p>
       ) : (
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {resources.map((resource) => (
+          {visibleResources.map((resource) => (
             <article key={resource.id} className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
               <a href={resource.canonical_url} target="_blank" rel="noreferrer" className="block bg-stone-200">
                 {resource.thumbnail_url ? (
